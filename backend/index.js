@@ -23,5 +23,5 @@ app.use("/api/items", itemRoutes);
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on ${port}`);
 });

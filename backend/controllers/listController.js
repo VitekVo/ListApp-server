@@ -1,6 +1,8 @@
 const listValidation = require("../validations/listValidation");
 const ListDao = require("../dao/listDao");
 
+const UserDao = require("../dao/userDao"); // Import user-related database methods
+
 const createList = async (req, res) => {
   const { error, value } = listValidation.create.validate(req.body);
   if (error) {
@@ -8,12 +10,28 @@ const createList = async (req, res) => {
   }
 
   try {
-    const newList = await ListDao.create(value);
+    const { name, host, guests } = value;
+
+    if (guests.includes(host)) {
+      return res.status(400).json({
+        message: "Your own ID cannot be on the guest list.",
+      });
+    }
+
+    const foundGuests = await UserDao.getByIds(guests);
+    if (foundGuests.length !== guests.length) {
+      return res.status(400).json({
+        message: "Some of the guest IDs are invalid.",
+      });
+    }
+
+    const newList = await ListDao.create({ name, host, guests });
     res.status(201).json(newList);
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to create list", error: err.message });
+    res.status(500).json({
+      message: "Failed to create list",
+      error: err.message,
+    });
   }
 };
 
@@ -88,8 +106,29 @@ const manageGuests = async (req, res) => {
     const { listId } = req.params;
     const { userId, action } = value;
 
-    let updatedList;
+    // Fetch the list to verify the host ID
+    const list = await ListDao.getById(listId);
+    if (!list) {
+      return res.status(404).json({ message: "List not found." });
+    }
 
+    // Check if userId is the host ID
+    if (list.host === userId) {
+      return res.status(400).json({
+        message: "Host ID cannot be added to or removed from the guest list.",
+      });
+    }
+
+    // Check if the userId exists in the User collection
+    const userExists = await UserDao.getById(userId); // Assume UserDao has a getById method
+    if (!userExists) {
+      return res.status(400).json({
+        message: "This user ID does not exist.",
+      });
+    }
+
+    // Perform the add or remove action
+    let updatedList;
     if (action === "add") {
       updatedList = await ListDao.addGuest(listId, userId);
     } else if (action === "remove") {
@@ -100,15 +139,12 @@ const manageGuests = async (req, res) => {
         .json({ message: "Invalid action. Use 'add' or 'remove'." });
     }
 
-    if (!updatedList) {
-      return res.status(404).json({ message: "List not found" });
-    }
-
     res.status(200).json(updatedList);
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to update guest list", error: err.message });
+    res.status(500).json({
+      message: "Failed to update guest list",
+      error: err.message,
+    });
   }
 };
 

@@ -69,13 +69,10 @@ const deleteUser = async (req, res) => {
   try {
     const { userId } = value;
 
-    // Step 1: Delete all lists where the user is the host
     await ListDao.deleteByHost(userId);
 
-    // Step 2: Remove user ID from guests array in all lists
     await ListDao.removeGuestFromLists(userId);
 
-    // Step 3: Delete the user
     const deletedUser = await UserDao.deleteById(userId);
     if (!deletedUser) {
       return res.status(404).json({ message: "User not found" });

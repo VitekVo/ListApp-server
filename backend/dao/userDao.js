@@ -13,6 +13,10 @@ const getById = async (id) => {
   return await User.findById(id);
 };
 
+const getByIds = async (ids) => {
+  return await User.find({ _id: { $in: ids } });
+};
+
 const updateById = async (id, updateData) => {
   return await User.findByIdAndUpdate(id, updateData, { new: true });
 };
@@ -21,4 +25,4 @@ const deleteById = async (id) => {
   return await User.findByIdAndDelete(id);
 };
 
-module.exports = { create, getAll, getById, updateById, deleteById };
+module.exports = { create, getAll, getById, getByIds, updateById, deleteById };
