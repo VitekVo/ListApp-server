@@ -15,7 +15,7 @@ app.use(
   cors({
     origin: allowedOrigins,
     methods: "GET,POST,PUT,DELETE",
-    credentials: true, // If using cookies or authorization headers
+    credentials: false,
   })
 );
 
@@ -23,6 +23,11 @@ app.use(express.json());
 
 // Connect to MongoDB
 connectDB();
+
+// Routes
+app.use("/api/lists", listRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/items", itemRoutes);
 
 // Error handling
 app.use((req, res, next) => {
@@ -33,11 +38,6 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: "Server error", error: err.message });
 });
-
-// Routes
-app.use("/api/lists", listRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/items", itemRoutes);
 
 // Start the server
 app.listen(port, () => {
